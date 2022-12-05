@@ -1,0 +1,10 @@
+[package]
+name = "top-auto-upgrader"
+version = "0.1.0-alpha"
+edition = "2021"
+authors = ["Charles.Liu@upblocks.io"]
+description = "Auto Upgrade Service for TOP-Chain"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
