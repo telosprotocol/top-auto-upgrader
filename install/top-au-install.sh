@@ -21,6 +21,14 @@ service_stub=/etc/init.d/${service_name}
 bin_name=top-auto-upgrader
 
 
+# config_var:
+config_machine_id=""
+config_topio_home_dir=""
+config_topio_package_dir="/"
+config_topio_mining_pub_key=""
+config_topio_mining_key_pswd=""
+config_topio_user=""
+
 # bool result
 cmd_success=0
 cmd_failed=1
@@ -90,13 +98,152 @@ function get_char() {
     stty $SAVEDSTTY
 }
 
+function _pre_install_machine_id() {
+    # get machine_id
+    config_machine_id=$(cat /etc/machine-id)
+    echo
+    echo "----------------------------------------------------------------"
+    echo "machine-id: ${config_machine_id}"
+    echo "----------------------------------------------------------------"
+    echo
+}
+
+function _pre_install_package_dir() {
+    # get TOPIO_package_dir
+    echo -e "${green}Please Input current TOPIO release package directory ( Default value is /root ) :${plain}"
+    while true; do
+        read -p "(Please Input):" config_topio_package_dir
+        # check input empty
+        [ -z "${config_topio_package_dir}" ] && echo -e "[${red}Error${plain}]Empty directory is not allowed" && echo && continue
+        # check dir exist
+        [ ! -d "${config_topio_package_dir}" ] && echo -e "[${red}Error${plain}]Directory ${config_topio_package_dir} not exist" && echo && continue
+
+        # find topio-version-release:
+        cd ${config_topio_package_dir}
+        latest_version=$(find ./ -maxdepth 1 -type d -name "topio-*-release" | awk -F '-' '{print $2}' | sort -V | tail -n 1)
+        [ -z "${latest_version}" ] && echo -e "[${red}Error${plain}]Not find any topio packet at ${config_topio_package_dir}, consider install topio first." && continue
+
+        echo "find latest topio version: ${latest_version}"
+        cd ${cur_dir}
+        break
+    done;
+
+    echo
+    echo "----------------------------------------------------------------"
+    echo "topio release package save in: ${config_topio_package_dir}"
+    echo "----------------------------------------------------------------"
+    echo
+}
+
+function _pre_install_data_dir() {
+    # get TOPIO_data_dir
+    echo -e "${green}Please Input current TOPIO data directory ( Default value is /root/topnetwork ) :${plain}"
+    config_topio_home_dir=$(printenv TOPIO_HOME )
+    [ -n "${config_topio_home_dir}" ] && echo "(Detect environment variable): ${config_topio_home_dir}"
+    
+    while true; do
+        read -p "(Please Input):" config_topio_home_dir
+        # check input empty
+        [ -z "${config_topio_home_dir}" ] && config_topio_home_dir="/root/topnetwork"
+        # check dir exist
+        [ ! -d "${config_topio_home_dir}" ] && echo -e "[${red}Error${plain}]Directory ${config_topio_home_dir} not exist!" && echo && continue
+        # check dir/keystore exist
+        [ ! -d "${config_topio_home_dir}/keystore" ] && echo -e "[${red}Error${plain}]Directory ${config_topio_home_dir}/keystore not exist! " && echo && continue
+        break
+    done;
+
+    echo
+    echo "----------------------------------------------------------------"
+    echo "TOPIO_HOME: ${config_topio_home_dir}"
+    echo "----------------------------------------------------------------"
+    echo
+}
+
+function _pre_install_mining_key() {
+    # get default MinerAddress
+    echo -e "${green}Please Input the account public key used for mining:${plain}"
+    cd ${config_topio_home_dir}
+    echo 
+    [ $( find ./keystore -type f | wc -l ) -ne 0 ] &&  echo "It must be one of these:" && echo && find ./keystore -type f | xargs grep "pub" && echo 
+
+    while true; do
+        read -p "(Please Input):" config_topio_mining_pub_key
+        # check if public key exist in one of keystore.
+        [ $( grep "\"${config_topio_mining_pub_key}\"" ./keystore/* | wc -l ) -ne 1 ] && echo -e "[${red}Error${plain}] can not find corresponding keystore file of ${config_topio_mining_pub_key}" && echo && continue
+        break;
+    done;
+    cd ${cur_dir}
+
+    echo
+    echo "----------------------------------------------------------------"
+    echo "Mining Public Key: ${config_topio_mining_pub_key}"
+    echo "----------------------------------------------------------------"
+    echo
+}
+
+function _pre_install_mining_key_pswd() {
+    # get pswd of mining key
+    echo -e "${green}Please Input the account public key's password:${plain}"
+    while true; do
+        read -p "(Please Input):" config_topio_mining_key_pswd
+        local mining_key_pswd_check=""
+        read -p "(Please Input Twice for double check):" mining_key_pswd_check
+        [ "${config_topio_mining_key_pswd}" != "${mining_key_pswd_check}" ] && echo -e "${red}The passwords entered twice are different!${plain}" && echo && continue
+        break
+    done;
+}
+
+function _pre_install_topio_user() {
+    # get user that launch topio
+    echo -e "${green} Please Input the user which start topio:( Default User is root ):${plain}"
+    while true; do
+        read -p "(Please Input):" config_topio_user
+        [ -z "${config_topio_user}" ] && config_topio_user="root"
+        ! $(id "${config_topio_user}" >/dev/null 2>&1 ) && echo -e "[${red}Error${plain}] user ${config_topio_user} not exist" && echo && continue
+        break;
+    done
+
+    echo
+    echo "----------------------------------------------------------------"
+    echo "TOPIO User: ${config_topio_user}"
+    echo "----------------------------------------------------------------"
+    echo
+}
+
+function pre_install() {
+
+    echo "pre_install"
+
+    _pre_install_machine_id
+    _pre_install_package_dir
+    _pre_install_data_dir
+    _pre_install_mining_key
+    _pre_install_mining_key_pswd
+    _pre_install_topio_user
+}
+
+
 # write binary config file
 function write_top_auto_upgrader_config() {
     [ ! -d ${config_dir} ] && mkdir ${config_dir}
 
     cat > ${config_dir}/config.json <<-EOF
 {
-    "__test": "__reserved",
+    "user_config": {
+        "mining_pub_key": "${config_topio_mining_pub_key}",
+        "mining_pswd_enc": "",
+        "topio_package_dir": "${config_topio_package_dir}",
+        "topio_user": "${config_topio_user}"
+    },
+    "env_config": {
+        "machine_id": "${config_machine_id}"
+    },
+    "au_config": {
+
+    },
+    "temp_config": {
+        "temp_pswd": "${config_topio_mining_key_pswd}"
+    }
 }
 EOF
 }
@@ -210,6 +357,7 @@ function __install() {
     
     # 0. disable se linux
     # 1. pre install if need, ask config that need to fill into json.
+    pre_install
 
     # 2. echo double check ready
     echo
