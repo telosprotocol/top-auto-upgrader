@@ -1,8 +1,16 @@
+#![feature(never_type)]
+
+mod config;
+mod error;
+
+use clap::Parser;
+use daemonize::Daemonize;
+use error::AuError;
 use tokio::time::{sleep, Duration};
 
-use daemonize::Daemonize;
+use crate::config::ConfigJson;
 
-fn test_run() {
+fn test_run() -> ! {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -14,15 +22,35 @@ fn test_run() {
         })
 }
 
-fn main() {
-    // add args parser to take `-d` as daemon and decode `-c config` config.json
-    let daemonize = Daemonize::new();
-    match daemonize.start() {
-        Ok(_) => println!("success"),
-        Err(e) => println!("Error: {}", e),
+#[derive(Parser)]
+struct AuArgs {
+    /// daemon
+    #[clap(short = 'd', long = "daemon")]
+    daemon: bool,
+
+    /// config file
+    #[clap(short = 'c', long = "config")]
+    config: String,
+}
+
+fn main() -> Result<!, AuError> {
+    let args = AuArgs::parse();
+
+    let config_json = ConfigJson::read_from_file(&args.config)?;
+
+    println!("config_Json: {:?}", config_json);
+
+    let r = config_json.fetch_password();
+
+    println!("password: {:?}", r);
+
+    if args.daemon {
+        let daemonize = Daemonize::new();
+        daemonize.start()?;
+        println!("daemon start ok"); // won't see
     }
 
-    println!("start ok"); // won't see
+    println!("Top Auto Upgrader Start!");
 
-    test_run();
+    test_run()
 }

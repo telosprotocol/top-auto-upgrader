@@ -114,7 +114,7 @@ function _pre_install_package_dir() {
     while true; do
         read -p "(Please Input):" config_topio_package_dir
         # check input empty
-        [ -z "${config_topio_package_dir}" ] && echo -e "[${red}Error${plain}]Empty directory is not allowed" && echo && continue
+        [ -z "${config_topio_package_dir}" ] && config_topio_package_dir="/root"
         # check dir exist
         [ ! -d "${config_topio_package_dir}" ] && echo -e "[${red}Error${plain}]Directory ${config_topio_package_dir} not exist" && echo && continue
 
@@ -361,7 +361,7 @@ function __install() {
 
     # 2. echo double check ready
     echo
-    echo "Press any key to start...or Press Ctrl+C to cancel"
+    echo "Press any key to start install...or Press Ctrl+C to cancel"
     char=`get_char`
 
     cd ${cur_dir}
