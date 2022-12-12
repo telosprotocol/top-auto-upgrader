@@ -40,7 +40,12 @@ yellow='\033[0;33m'
 plain='\033[0m'
 
 #Current folder
-cur_dir=`pwd`
+cur_dir=$(pwd)
+
+login_user=$(eval logname)
+login_user_home_dir=$( getent passwd ${login_user} | cut -d: -f6 )
+# echo "$login_user"
+# echo "$login_user_home_dir"
 
 # Check system
 function check_sys() {
@@ -89,7 +94,7 @@ function check_sys() {
 }
 
 function get_char() {
-    SAVEDSTTY=`stty -g`
+    SAVEDSTTY=$(stty -g)
     stty -echo
     stty cbreak
     dd if=/dev/tty bs=1 count=1 2> /dev/null
@@ -108,19 +113,38 @@ function _pre_install_machine_id() {
     echo
 }
 
+function _pre_quite_check_package_dir() {
+    # default dir is login_user_home_dir
+    
+    # check default dir exist
+    [ ! -d "${login_user_home_dir}" ] && return ${cmd_failed}
+
+    cd ${login_user_home_dir}
+    local latest_version=$(find ./ -maxdepth 1 -type d -name "topio-*-release" | awk -F '-' '{print $2}' | sort -V | tail -n 1)
+    [ -z "${latest_version}" ] && cd ${cur_dir} && return ${cmd_failed}
+    cd ${cur_dir}
+
+    config_topio_package_dir=${login_user_home_dir}
+    
+    echo "Find: package directory: ${config_topio_package_dir}"
+    echo "Find: latest topio version: ${latest_version}"
+
+    return ${cmd_success}
+}
+
 function _pre_install_package_dir() {
     # get TOPIO_package_dir
-    echo -e "${green}Please Input current TOPIO release package directory ( Default value is /root ) :${plain}"
+    echo -e "${green}Please Input current TOPIO release package directory ( Default value is ${login_user_home_dir} ) :${plain}"
     while true; do
         read -p "(Please Input):" config_topio_package_dir
         # check input empty
-        [ -z "${config_topio_package_dir}" ] && config_topio_package_dir="/root"
+        [ -z "${config_topio_package_dir}" ] && config_topio_package_dir="${login_user_home_dir}"
         # check dir exist
         [ ! -d "${config_topio_package_dir}" ] && echo -e "[${red}Error${plain}]Directory ${config_topio_package_dir} not exist" && echo && continue
 
         # find topio-version-release:
         cd ${config_topio_package_dir}
-        latest_version=$(find ./ -maxdepth 1 -type d -name "topio-*-release" | awk -F '-' '{print $2}' | sort -V | tail -n 1)
+        local latest_version=$(find ./ -maxdepth 1 -type d -name "topio-*-release" | awk -F '-' '{print $2}' | sort -V | tail -n 1)
         [ -z "${latest_version}" ] && echo -e "[${red}Error${plain}]Not find any topio packet at ${config_topio_package_dir}, consider install topio first." && continue
 
         echo "find latest topio version: ${latest_version}"
@@ -135,16 +159,34 @@ function _pre_install_package_dir() {
     echo
 }
 
+function _pre_quite_check_data_dir() {
+    # default data dir is ~/topnetwork
+    local default_topio_home_dir="${login_user_home_dir}/topnetwork"
+
+    # check default dir exist
+    [ ! -d "${default_topio_home_dir}" ] && return ${cmd_failed}
+
+    # check dir/keystore exist
+    [ ! -d "${default_topio_home_dir}/keystore" ] && return ${cmd_failed}
+
+    config_topio_home_dir=${default_topio_home_dir}
+
+    echo "Find: topio home directory: ${config_topio_home_dir}"
+
+    return ${cmd_success}
+}
+
 function _pre_install_data_dir() {
     # get TOPIO_data_dir
-    echo -e "${green}Please Input current TOPIO data directory ( Default value is /root/topnetwork ) :${plain}"
+    local default_topio_home_dir="${login_user_home_dir}/topnetwork"
+    echo -e "${green}Please Input current TOPIO data directory ( Default value is ${default_topio_home_dir} ) :${plain}"
     config_topio_home_dir=$(printenv TOPIO_HOME )
     [ -n "${config_topio_home_dir}" ] && echo "(Detect environment variable): ${config_topio_home_dir}"
     
     while true; do
         read -p "(Please Input):" config_topio_home_dir
         # check input empty
-        [ -z "${config_topio_home_dir}" ] && config_topio_home_dir="/root/topnetwork"
+        [ -z "${config_topio_home_dir}" ] && config_topio_home_dir="${default_topio_home_dir}"
         # check dir exist
         [ ! -d "${config_topio_home_dir}" ] && echo -e "[${red}Error${plain}]Directory ${config_topio_home_dir} not exist!" && echo && continue
         # check dir/keystore exist
@@ -157,6 +199,18 @@ function _pre_install_data_dir() {
     echo "TOPIO_HOME: ${config_topio_home_dir}"
     echo "----------------------------------------------------------------"
     echo
+}
+
+function _pre_quite_check_mining_key() {
+    # if only one keystore account find.
+    cd ${config_topio_home_dir}
+    [ $( find ./keystore -type f | wc -l ) -ne 1 ] && cd ${cur_dir} && return ${cmd_failed}
+    [ $( grep "public_key" ./keystore/* | wc -l ) -ne 1 ] && cd ${cur_dir} && return ${cmd_failed}
+    config_topio_mining_pub_key=$( grep "public_key" ./keystore/* | grep ": \".*\"" -oE | sed 's/[:\"[:blank:]]*//g' )
+
+    echo "Find: public key is ${config_topio_mining_pub_key}"
+
+    return ${cmd_success}
 }
 
 function _pre_install_mining_key() {
@@ -215,9 +269,9 @@ function pre_install() {
     echo "pre_install"
 
     _pre_install_machine_id
-    _pre_install_package_dir
-    _pre_install_data_dir
-    _pre_install_mining_key
+    ! _pre_quite_check_package_dir && _pre_install_package_dir
+    ! _pre_quite_check_data_dir && _pre_install_data_dir
+    ! _pre_quite_check_mining_key && _pre_install_mining_key
     _pre_install_mining_key_pswd
     _pre_install_topio_user
 }
@@ -279,15 +333,6 @@ function install_top_au_service() {
     # ldconfig  # we might not need this , if make musl binary. Later check.
 
     cd ${cur_dir}
-
-}
-
-function build_or_fetch_top_auto_upgrader() {
-    # TODO change from
-    # test only
-    /bin/cp -rfa ./target/debug/${bin_name} ${target_dir}
-
-    cd ${cur_dir}
     if [ -f ${target_dir}/${bin_name} ]; then
         # Download service daemon script
 
@@ -317,6 +362,11 @@ function build_or_fetch_top_auto_upgrader() {
     fi
 }
 
+function build_or_fetch_top_auto_upgrader() {
+    # TODO change from
+    # test only
+    /bin/cp -rfa ./target/release/${bin_name} ${target_dir}
+}
 
 function do_uninstall_action() {
     ${service_stub} status > /dev/null 2>&1
@@ -362,7 +412,7 @@ function __install() {
     # 2. echo double check ready
     echo
     echo "Press any key to start install...or Press Ctrl+C to cancel"
-    char=`get_char`
+    char=$(get_char)
 
     cd ${cur_dir}
 
@@ -378,6 +428,7 @@ function __install() {
     write_top_auto_upgrader_config
 
     # 7. install service
+    install_top_au_service
 
 
     echo ""
@@ -406,7 +457,7 @@ function main() {
             ;;
         *)
             echo "Arguments error! [${action}]"
-            echo "Usage: `basename "$0"` [install|uninstall]"
+            echo "Usage: $(basename "$0") [install|uninstall]"
             ;;
     esac
 
