@@ -17,3 +17,4 @@ daemonize = "0.4.1"
 rand = "0.8"
 rsa = "0.7"
 hex = "0.4"
+top-keystore-rs = { git = "https://github.com/CharlesLiu-TOPNetwork/top-keystore-rs" }

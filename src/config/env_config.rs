@@ -40,3 +40,33 @@ impl EnvConfigJson {
         String::from_utf8(dec_data).expect("non utf8 data")
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::EnvConfigJson;
+    use rand::{
+        distributions::{Alphanumeric, DistString},
+        Rng,
+    };
+
+    #[test]
+    fn test_config_rsa_crypto() {
+        let mut rng = rand::thread_rng();
+        let rand_machine_id = (0..)
+            .map(|_| rng.sample(Alphanumeric) as char)
+            .filter(|c| c.is_ascii_hexdigit())
+            .take(16)
+            .collect();
+        let env_config = EnvConfigJson {
+            machine_id: rand_machine_id,
+        };
+
+        let rand_pswd = Alphanumeric.sample_string(&mut rng, 10);
+
+        let enc = env_config.encrypt(rand_pswd.clone());
+
+        let dec = env_config.decrypt(&enc);
+
+        assert_eq!(rand_pswd, dec);
+    }
+}

@@ -25,6 +25,7 @@ bin_name=top-auto-upgrader
 config_machine_id=""
 config_topio_home_dir=""
 config_topio_package_dir="/"
+config_topio_mining_keystore_file=""
 config_topio_mining_pub_key=""
 config_topio_mining_key_pswd=""
 config_topio_user=""
@@ -207,7 +208,9 @@ function _pre_quite_check_mining_key() {
     [ $( find ./keystore -type f | wc -l ) -ne 1 ] && cd ${cur_dir} && return ${cmd_failed}
     [ $( grep "public_key" ./keystore/* | wc -l ) -ne 1 ] && cd ${cur_dir} && return ${cmd_failed}
     config_topio_mining_pub_key=$( grep "public_key" ./keystore/* | grep ": \".*\"" -oE | sed 's/[:\"[:blank:]]*//g' )
+    config_topio_mining_keystore_file=$( find ./keystore/* | xargs readlink -f )
 
+    echo "Find: keystore file is ${config_topio_mining_keystore_file}"
     echo "Find: public key is ${config_topio_mining_pub_key}"
 
     return ${cmd_success}
@@ -224,12 +227,14 @@ function _pre_install_mining_key() {
         read -p "(Please Input):" config_topio_mining_pub_key
         # check if public key exist in one of keystore.
         [ $( grep "\"${config_topio_mining_pub_key}\"" ./keystore/* | wc -l ) -ne 1 ] && echo -e "[${red}Error${plain}] can not find corresponding keystore file of ${config_topio_mining_pub_key}" && echo && continue
+        config_topio_mining_keystore_file=$( grep "\"${config_topio_mining_pub_key}\"" ./keystore/* -l | xargs readlink -f )
         break;
     done;
     cd ${cur_dir}
 
     echo
     echo "----------------------------------------------------------------"
+    echo "Mining Key Keystore: ${config_topio_mining_keystore_file}"
     echo "Mining Public Key: ${config_topio_mining_pub_key}"
     echo "----------------------------------------------------------------"
     echo
@@ -276,6 +281,20 @@ function pre_install() {
     _pre_install_topio_user
 }
 
+# check config file
+function check_config() {
+    if [ -f ${target_dir}/${bin_name} ]; then
+        ${target_dir}/${bin_name} -c ${config_dir}/config.json --check 
+        if [ $? -ne 0 ]; then
+            echo "${proj_name} install failed, config check error"
+            exit 1
+        fi
+    else
+        echo "${proj_name} install failed, please contact @top"
+        exit 1
+    fi
+    
+}
 
 # write binary config file
 function write_top_auto_upgrader_config() {
@@ -284,6 +303,7 @@ function write_top_auto_upgrader_config() {
     cat > ${config_dir}/config.json <<-EOF
 {
     "user_config": {
+        "minging_keystore_file_dir": "${config_topio_mining_keystore_file}",
         "mining_pub_key": "${config_topio_mining_pub_key}",
         "mining_pswd_enc": "",
         "topio_package_dir": "${config_topio_package_dir}",
@@ -427,7 +447,10 @@ function __install() {
     # 6. write config
     write_top_auto_upgrader_config
 
-    # 7. install service
+    # 7. use top-auto-upgrader to check config
+    check_config
+
+    # 8. install service
     install_top_au_service
 
 

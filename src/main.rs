@@ -1,5 +1,6 @@
 #![feature(never_type)]
 
+mod commands;
 mod config;
 mod error;
 
@@ -31,10 +32,19 @@ struct AuArgs {
     /// config file
     #[clap(short = 'c', long = "config")]
     config: String,
+
+    /// check config file only.
+    #[clap(long = "check")]
+    check: bool,
 }
 
-fn main() -> Result<!, AuError> {
+fn main() -> Result<(), AuError> {
     let args = AuArgs::parse();
+
+    if args.check {
+        ConfigJson::check_config_file(&args.config)?;
+        return Ok(());
+    }
 
     let config_json = ConfigJson::read_from_file(&args.config)?;
 
