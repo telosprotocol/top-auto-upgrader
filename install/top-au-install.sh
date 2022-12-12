@@ -303,7 +303,7 @@ function write_top_auto_upgrader_config() {
     cat > ${config_dir}/config.json <<-EOF
 {
     "user_config": {
-        "minging_keystore_file_dir": "${config_topio_mining_keystore_file}",
+        "mining_keystore_file_dir": "${config_topio_mining_keystore_file}",
         "mining_pub_key": "${config_topio_mining_pub_key}",
         "mining_pswd_enc": "",
         "topio_package_dir": "${config_topio_package_dir}",

@@ -30,6 +30,7 @@ pub struct ConfigJson {
 }
 
 impl ConfigJson {
+    /// Create ConfigJson object with config file path.
     pub fn read_from_file(file_path_str: &str) -> Result<Self, AuError> {
         let content = read_file(file_path_str)?;
         let mut config: Self = serde_json::from_str(&content)?;
@@ -37,18 +38,23 @@ impl ConfigJson {
         Ok(config)
     }
 
+    /// Check config file. Try decrypt keystore && encrypt password with machine-id's RSA key.
+    ///
+    /// Called with `--check` parameter at install.sh
     pub fn check_config_file(file_path_str: &str) -> Result<(), AuError> {
         let content = read_file(file_path_str)?;
         let mut config: Self = serde_json::from_str(&content)?;
         config.config_path = String::from(file_path_str); // save for furture use.
 
-        // TODO check keystore
-        config.try_decrypt_keystore()?;
         config.try_encrypt_password();
+        config.try_decrypt_keystore()?;
         config.update_config_file()?;
         Ok(())
     }
 
+    /// Write config back to config.json file.
+    ///
+    /// Called after alter config's content.
     pub fn update_config_file(&self) -> Result<(), AuError> {
         write_file(&self.config_path, serde_json::to_string_pretty(&self)?)?;
         Ok(())
@@ -62,13 +68,12 @@ impl ConfigJson {
     }
 
     fn try_decrypt_keystore(&mut self) -> Result<(), AuError> {
-        let mut pswd = self.temp_config.take_pswd();
-        if pswd.is_empty() {
-            pswd = self.fetch_password();
-        }
+        assert!(self.temp_config.take_pswd().is_empty());
+        let pswd = self.fetch_password();
         self.user_config.try_decrypt_keystore(pswd)
     }
 
+    /// Decode encrypted password with machine-id's RSA key
     pub fn fetch_password(&self) -> String {
         self.env_config.decrypt(self.user_config.get_enc_pswd())
     }
