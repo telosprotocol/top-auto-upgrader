@@ -48,11 +48,11 @@ fn main() -> Result<(), AuError> {
 
     let config_json = ConfigJson::read_from_file(&args.config)?;
 
-    println!("config_Json: {:?}", config_json);
+    // println!("config_Json: {:?}", config_json);
 
-    let r = config_json.fetch_password();
+    // let r = config_json.fetch_password();
 
-    println!("password: {:?}", r);
+    // println!("password: {:?}", r);
 
     if args.daemon {
         let daemonize = Daemonize::new();
