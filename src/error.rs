@@ -13,6 +13,12 @@ pub enum AuError {
 
     #[error("Keystore error: {0}")]
     KeystoreError(String),
+
+    #[error("Http error: {0}")]
+    HttpError(String),
+
+    #[error("Json error: {0}")]
+    JsonParseError(String),
 }
 
 impl From<std::io::Error> for AuError {
@@ -36,5 +42,23 @@ impl From<daemonize::DaemonizeError> for AuError {
 impl From<top_keystore_rs::KeystoreError> for AuError {
     fn from(err: top_keystore_rs::KeystoreError) -> Self {
         AuError::KeystoreError(err.to_string())
+    }
+}
+
+impl From<hyper::http::Error> for AuError {
+    fn from(err: hyper::http::Error) -> Self {
+        AuError::HttpError(err.to_string())
+    }
+}
+
+impl From<hyper::Error> for AuError {
+    fn from(err: hyper::Error) -> Self {
+        AuError::HttpError(err.to_string())
+    }
+}
+
+impl From<json::Error> for AuError {
+    fn from(err: json::Error) -> Self {
+        AuError::JsonParseError(err.to_string())
     }
 }

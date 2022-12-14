@@ -3,6 +3,7 @@
 mod commands;
 mod config;
 mod error;
+mod version;
 
 use clap::Parser;
 use daemonize::Daemonize;

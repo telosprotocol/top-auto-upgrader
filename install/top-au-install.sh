@@ -30,6 +30,9 @@ config_topio_mining_pub_key=""
 config_topio_mining_key_pswd=""
 config_topio_user=""
 
+config_release_api="https://api.github.com/repos/telosprotocol/TOP-Chain/releases/latest"
+config_release_info_source_type="TelosGithub"
+
 # bool result
 cmd_success=0
 cmd_failed=1
@@ -313,7 +316,8 @@ function write_top_auto_upgrader_config() {
         "machine_id": "${config_machine_id}"
     },
     "au_config": {
-
+        "release_api": "https://api.github.com/repos/telosprotocol/TOP-Chain/releases/latest",
+        "release_info_source_type": "TelosGithub"
     },
     "temp_config": {
         "temp_pswd": "${config_topio_mining_key_pswd}"
