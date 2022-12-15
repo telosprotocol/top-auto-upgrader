@@ -19,6 +19,9 @@ pub enum AuError {
 
     #[error("Json error: {0}")]
     JsonParseError(String),
+
+    #[error("std error: {0}")]
+    StdError(String),
 }
 
 impl From<std::io::Error> for AuError {
@@ -60,5 +63,17 @@ impl From<hyper::Error> for AuError {
 impl From<json::Error> for AuError {
     fn from(err: json::Error) -> Self {
         AuError::JsonParseError(err.to_string())
+    }
+}
+
+impl From<std::str::Utf8Error> for AuError {
+    fn from(err: std::str::Utf8Error) -> Self {
+        AuError::StdError(err.to_string())
+    }
+}
+
+impl From<std::num::ParseIntError> for AuError {
+    fn from(err: std::num::ParseIntError) -> Self {
+        AuError::StdError(err.to_string())
     }
 }

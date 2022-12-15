@@ -1,25 +1,35 @@
 #![feature(never_type)]
+#![feature(async_fn_in_trait)]
+// #![feature(let_chains)]
 
 mod commands;
 mod config;
 mod error;
+mod frequency;
+mod logic;
 mod version;
+
+use std::sync::Arc;
 
 use clap::Parser;
 use daemonize::Daemonize;
 use error::AuError;
+use logic::{KeepAliveLogic, LogicRunner};
 use tokio::time::{sleep, Duration};
 
 use crate::config::ConfigJson;
 
-fn test_run() -> ! {
+fn test_run(config: ConfigJson) -> ! {
+    let config = Arc::new(config);
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(async {
+            let t = KeepAliveLogic::new(config.clone());
+            t.loop_run().await;
             loop {
-                sleep(Duration::from_secs(10)).await;
+                sleep(Duration::from_secs(1)).await;
             }
         })
 }
@@ -63,5 +73,5 @@ fn main() -> Result<(), AuError> {
 
     println!("Top Auto Upgrader Start!");
 
-    test_run()
+    test_run(config_json)
 }

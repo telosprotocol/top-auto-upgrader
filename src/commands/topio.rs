@@ -6,6 +6,13 @@ use std::{
 use crate::error::AuError;
 
 #[derive(Debug)]
+pub enum ProcessStatus {
+    Ok,
+    Stoped,
+    NeedReset,
+}
+
+#[derive(Debug)]
 pub struct TopioCommands {
     operator_user: String,
     exec_dir: String,
@@ -79,7 +86,7 @@ impl TopioCommands {
         Ok(r)
     }
 
-    pub fn set_miner_key(&self, mining_pub_key: String, pswd: String) -> Result<Output, AuError> {
+    pub fn set_miner_key(&self, mining_pub_key: &str, pswd: String) -> Result<Output, AuError> {
         let cmd_str = format!(
             r#"cd {} && topio mining setMinerKey {}"#,
             &self.exec_dir, &mining_pub_key
@@ -131,6 +138,66 @@ impl TopioCommands {
         let r = c.wait_with_output()?;
         Ok(r)
     }
+
+    fn check_topio_running(&self) -> Result<Output, AuError> {
+        let cmd_str = format!(
+            r#"cd {} && ps -ef | grep topio | grep -v grep | grep -i startnode | wc -l"#,
+            &self.exec_dir
+        );
+        let c = Command::new("sudo")
+            .args(&["-u", &self.operator_user])
+            .args(&["sh", "-c"])
+            .arg(cmd_str)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+        let r = c.wait_with_output()?;
+        Ok(r)
+    }
+
+    pub fn topio_status(&self) -> Result<ProcessStatus, AuError> {
+        let output = self.check_topio_running()?;
+        match std::str::from_utf8(&output.stdout)?
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse::<usize>()?
+        {
+            0 => Ok(ProcessStatus::Stoped),
+            1 => Ok(ProcessStatus::Ok),
+            _ => Ok(ProcessStatus::NeedReset),
+        }
+    }
+
+    fn check_safebox_running(&self) -> Result<Output, AuError> {
+        let cmd_str = format!(
+            r#"cd {} && ps -ef | grep topio | grep -v grep | grep -i safebox | wc -l "#,
+            &self.exec_dir
+        );
+        let c = Command::new("sudo")
+            .args(&["-u", &self.operator_user])
+            .args(&["sh", "-c"])
+            .arg(cmd_str)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+        let r = c.wait_with_output()?;
+        Ok(r)
+    }
+
+    pub fn safebox_status(&self) -> Result<ProcessStatus, AuError> {
+        let output = self.check_safebox_running()?;
+        match std::str::from_utf8(&output.stdout)?
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse::<usize>()?
+        {
+            0 => Ok(ProcessStatus::Stoped),
+            1 => Ok(ProcessStatus::Ok),
+            _ => Ok(ProcessStatus::NeedReset),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -157,7 +224,7 @@ mod test {
         let r = c.check_version();
         println!("version result:{:?}", r);
 
-        let r = c.set_miner_key(String::from("BKQLB1qlWXqmfltrMuP0u2h8hfq+Wk8JnbzQbP5EG0xqgWUw97wDF7VnsQOlQ0WVvd/Kv1a6ijFKkf8SPwDSWa4="),String::from("1234"));
+        let r = c.set_miner_key("BKQLB1qlWXqmfltrMuP0u2h8hfq+Wk8JnbzQbP5EG0xqgWUw97wDF7VnsQOlQ0WVvd/Kv1a6ijFKkf8SPwDSWa4=",String::from("1234"));
         println!("set key result:{:?}", r);
 
         let r = c.start_topio();

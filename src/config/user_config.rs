@@ -29,4 +29,16 @@ impl UserConfigJson {
             .or_else(|_| decrypt_T8_keystore_file(keystore_file_content.clone(), pswd.clone()))?;
         Ok(())
     }
+
+    pub fn user(&self) -> &str {
+        &self.topio_user
+    }
+
+    pub fn exec_dir(&self) -> &str {
+        &self.topio_package_dir
+    }
+
+    pub fn pubkey(&self) -> &str {
+        &&self.mining_pub_key
+    }
 }
