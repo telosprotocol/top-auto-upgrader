@@ -1,7 +1,9 @@
 use hyper::{Body, Client, Method, Request, StatusCode};
 use hyper_tls::HttpsConnector;
 
+use crate::config::ReleaseInfoSourceType;
 use crate::error::AuError;
+use crate::version::ReleaseInfo;
 
 pub struct VersionHandler {
     uri: String,
@@ -9,6 +11,21 @@ pub struct VersionHandler {
 
 impl VersionHandler {
     // fn new
+    pub fn new(uri: String, release_info_type: ReleaseInfoSourceType) -> Self {
+        assert!(release_info_type == ReleaseInfoSourceType::TelosGithub); // only support this for now, make VersionHandler release_info_type generics later
+        VersionHandler { uri }
+    }
+
+    pub async fn get_release_info(&self) -> Result<ReleaseInfo, AuError> {
+        let fetch_json = self.get_release_info_json().await?;
+        if let Some(release_info) = ReleaseInfo::new_from_json_object(&fetch_json) {
+            Ok(release_info)
+        } else {
+            Err(AuError::JsonParseError(String::from(
+                "release info json parse error",
+            )))
+        }
+    }
 
     async fn get_release_info_json(&self) -> Result<json::JsonValue, AuError> {
         let req = Request::builder()
@@ -36,18 +53,17 @@ impl VersionHandler {
 mod test {
     use super::*;
 
-    async fn do_get_release_info() -> json::JsonValue {
-        let h = VersionHandler {
-            uri: String::from(
-                "https://api.github.com/repos/telosprotocol/TOP-Chain/releases/latest",
-            ),
-        };
-        h.get_release_info_json().await.unwrap()
+    async fn do_get_release_info() -> Result<ReleaseInfo, AuError> {
+        let uri =
+            String::from("https://api.github.com/repos/telosprotocol/TOP-Chain/releases/latest");
+        let h = VersionHandler::new(uri, ReleaseInfoSourceType::TelosGithub);
+        h.get_release_info().await
     }
 
     #[test]
     fn test_get_release_info() {
-        let r = tokio_test::block_on(do_get_release_info());
-        println!("r: {}", r);
+        let r = tokio_test::block_on(do_get_release_info()).unwrap();
+        println!("r: {:?}", r);
+        println!("version: {:?}", r.version());
     }
 }

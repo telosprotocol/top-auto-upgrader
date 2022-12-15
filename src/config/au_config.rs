@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum RelaseInfoSourceType {
+pub enum ReleaseInfoSourceType {
     TelosGithub,
     TelosWebApi,
 }
@@ -9,18 +9,18 @@ pub enum RelaseInfoSourceType {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuConfigJson {
     release_api: String,
-    release_info_source_type: RelaseInfoSourceType,
+    release_info_source_type: ReleaseInfoSourceType,
 }
 
 #[cfg(test)]
 mod test {
-    use super::{AuConfigJson, RelaseInfoSourceType};
+    use super::{AuConfigJson, ReleaseInfoSourceType};
 
     #[test]
     fn test_au_config() {
         let c = AuConfigJson {
             release_api: String::from("api.github.com/xxx"),
-            release_info_source_type: RelaseInfoSourceType::TelosGithub,
+            release_info_source_type: ReleaseInfoSourceType::TelosGithub,
         };
         assert_eq!(
             serde_json::to_string(&c).unwrap(),

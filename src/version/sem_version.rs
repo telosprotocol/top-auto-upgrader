@@ -1,14 +1,37 @@
-use std::{cmp::Ordering, fmt};
+use std::{cmp::Ordering, str::FromStr};
 
+#[derive(Debug)]
 pub struct SemVersion {
     major: u32,
     minor: u32,
     patch: u32,
 }
 
-impl fmt::Display for SemVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+impl ToString for SemVersion {
+    fn to_string(&self) -> String {
+        format!("{}.{}.{}", self.major, self.minor, self.patch)
+    }
+}
+
+impl FromStr for SemVersion {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s: String = s.chars().skip_while(|c| !c.is_ascii_digit()).collect();
+        let parts: Vec<&str> = s.split('.').collect();
+        if parts.len() != 3 {
+            return Err("invalid number of parts");
+        }
+
+        let major = parts[0].parse().map_err(|_| "invalid major version")?;
+        let minor = parts[1].parse().map_err(|_| "invalid minor version")?;
+        let patch = parts[2].parse().map_err(|_| "invalid patch version")?;
+
+        Ok(Self {
+            major,
+            minor,
+            patch,
+        })
     }
 }
 
@@ -39,11 +62,11 @@ impl Ord for SemVersion {
 }
 
 impl SemVersion {
-    fn le(&self, other: &Self) -> bool {
+    pub fn le(&self, other: &Self) -> bool {
         self <= other
     }
 
-    fn ge(&self, other: &Self) -> bool {
+    pub fn ge(&self, other: &Self) -> bool {
         self >= other
     }
 }

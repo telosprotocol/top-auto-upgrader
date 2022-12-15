@@ -8,6 +8,7 @@ use env_config::EnvConfigJson;
 
 mod au_config;
 use au_config::AuConfigJson;
+pub(crate) use au_config::ReleaseInfoSourceType;
 
 mod temp_config;
 use temp_config::TempConfigJson;

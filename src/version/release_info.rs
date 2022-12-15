@@ -2,20 +2,24 @@ use chrono::{DateTime, Utc};
 use json::JsonValue;
 use std::str::FromStr;
 
-struct ReleaseInfo {
-    tag_name: String, // todo use version struct
+use crate::version::SemVersion;
+
+#[derive(Debug)]
+pub struct ReleaseInfo {
+    tag_name: String, // ~~todo use version struct~~ version is a top-au's concept. `tag_name` is real realease info key. hold tag_name is better.
     published_at: DateTime<Utc>,
     assets: Vec<ReleaseAsset>,
     body: String,
 }
 
+#[derive(Debug)]
 struct ReleaseAsset {
     name: String,
     browser_download_url: String,
 }
 
 impl ReleaseInfo {
-    fn new_from_json_object(json: &JsonValue) -> Option<Self> {
+    pub fn new_from_json_object(json: &JsonValue) -> Option<Self> {
         if let JsonValue::Object(obj) = json {
             let tag_name = obj.get("tag_name")?.as_str()?.into();
             let published_at_str = obj.get("published_at")?.as_str()?;
@@ -31,6 +35,9 @@ impl ReleaseInfo {
         } else {
             None
         }
+    }
+    pub fn version(&self) -> Option<SemVersion> {
+        SemVersion::from_str(&self.tag_name).ok()
     }
 }
 
