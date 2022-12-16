@@ -11,13 +11,13 @@ pub(crate) struct FrequencyControl {
 impl FrequencyControl {
     pub fn new(
         interval: Duration,
-        interval_decrement: Duration,
+        interval_increment: Duration,
         min_interval: Duration,
         max_interval: Duration,
     ) -> Self {
         Self {
             interval,
-            interval_increment: interval_decrement,
+            interval_increment: interval_increment,
             min_interval,
             max_interval,
             last_called_at: Instant::now(),

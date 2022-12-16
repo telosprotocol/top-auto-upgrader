@@ -1,5 +1,5 @@
 #![feature(never_type)]
-#![feature(async_fn_in_trait)]
+// #![feature(async_fn_in_trait)]
 // #![feature(let_chains)]
 
 mod commands;
@@ -9,25 +9,32 @@ mod frequency;
 mod logic;
 mod version;
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use clap::Parser;
 use daemonize::Daemonize;
 use error::AuError;
-use logic::{KeepAliveLogic, LogicRunner};
-use tokio::time::{sleep, Duration};
+use logic::{KeepAliveLogic, UpgradeTopioLogic};
+use tokio::{
+    join,
+    time::{sleep, Duration},
+};
 
 use crate::config::ConfigJson;
 
 fn test_run(config: ConfigJson) -> ! {
     let config = Arc::new(config);
+    let logic_mutex = Arc::new(Mutex::new(0));
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(async {
-            let t = KeepAliveLogic::new(config.clone());
-            t.loop_run().await;
+            let t = KeepAliveLogic::new(logic_mutex.clone(), config.clone());
+            let k = UpgradeTopioLogic::new(logic_mutex.clone(), config.clone());
+            join!(t.loop_run(), k.loop_run()); // won't exist.
+            panic!("ERROR");
+            #[allow(unreachable_code)]
             loop {
                 sleep(Duration::from_secs(1)).await;
             }

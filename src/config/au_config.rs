@@ -12,6 +12,15 @@ pub struct AuConfigJson {
     release_info_source_type: ReleaseInfoSourceType,
 }
 
+impl AuConfigJson {
+    pub fn api(&self) -> &str {
+        &self.release_api
+    }
+    pub fn source_type(&self) -> &ReleaseInfoSourceType {
+        &self.release_info_source_type
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{AuConfigJson, ReleaseInfoSourceType};

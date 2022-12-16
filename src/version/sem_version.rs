@@ -1,5 +1,7 @@
 use std::{cmp::Ordering, str::FromStr};
 
+use crate::error::AuError;
+
 #[derive(Debug)]
 pub struct SemVersion {
     major: u32,
@@ -14,18 +16,18 @@ impl ToString for SemVersion {
 }
 
 impl FromStr for SemVersion {
-    type Err = &'static str;
+    type Err = AuError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s: String = s.chars().skip_while(|c| !c.is_ascii_digit()).collect();
         let parts: Vec<&str> = s.split('.').collect();
         if parts.len() != 3 {
-            return Err("invalid number of parts");
+            return Err(AuError::StdError(String::from("invalid number of parts")));
         }
 
-        let major = parts[0].parse().map_err(|_| "invalid major version")?;
-        let minor = parts[1].parse().map_err(|_| "invalid minor version")?;
-        let patch = parts[2].parse().map_err(|_| "invalid patch version")?;
+        let major = parts[0].parse()?;
+        let minor = parts[1].parse()?;
+        let patch = parts[2].parse()?;
 
         Ok(Self {
             major,
@@ -58,15 +60,5 @@ impl Ord for SemVersion {
         } else {
             self.patch.cmp(&other.patch)
         }
-    }
-}
-
-impl SemVersion {
-    pub fn le(&self, other: &Self) -> bool {
-        self <= other
-    }
-
-    pub fn ge(&self, other: &Self) -> bool {
-        self >= other
     }
 }

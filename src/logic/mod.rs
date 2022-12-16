@@ -1,5 +1,8 @@
-mod logic_runner;
-pub(crate) use logic_runner::LogicRunner;
+// mod logic_runner;
+// pub(crate) use logic_runner::LogicRunner;
+// pub(crate) trait LogicRunner {
+//     async fn loop_run(&self);
+// }
 
 mod keep_alive;
 pub use keep_alive::KeepAliveLogic;

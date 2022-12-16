@@ -4,18 +4,16 @@ use std::str::FromStr;
 
 use crate::version::SemVersion;
 
-#[derive(Debug)]
 pub struct ReleaseInfo {
-    tag_name: String, // ~~todo use version struct~~ version is a top-au's concept. `tag_name` is real realease info key. hold tag_name is better.
-    published_at: DateTime<Utc>,
-    assets: Vec<ReleaseAsset>,
-    body: String,
+    tag_name: String, // version is a top-au's concept. `tag_name` is real realease info key. hold tag_name is better.
+    _published_at: DateTime<Utc>,
+    _assets: Vec<ReleaseAsset>,
+    _body: String,
 }
 
-#[derive(Debug)]
 struct ReleaseAsset {
-    name: String,
-    browser_download_url: String,
+    _name: String,
+    _browser_download_url: String,
 }
 
 impl ReleaseInfo {
@@ -28,9 +26,9 @@ impl ReleaseInfo {
             let body = obj.get("body")?.as_str()?.into();
             Some(ReleaseInfo {
                 tag_name,
-                published_at,
-                assets,
-                body,
+                _published_at: published_at,
+                _assets: assets,
+                _body: body,
             })
         } else {
             None
@@ -62,8 +60,8 @@ impl ReleaseAsset {
             let name = obj.get("name")?.as_str()?.into();
             let browser_download_url = obj.get("browser_download_url")?.as_str()?.into();
             Some(ReleaseAsset {
-                name,
-                browser_download_url,
+                _name: name,
+                _browser_download_url: browser_download_url,
             })
         } else {
             None

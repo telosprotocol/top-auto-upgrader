@@ -5,14 +5,14 @@ use crate::config::ReleaseInfoSourceType;
 use crate::error::AuError;
 use crate::version::ReleaseInfo;
 
-pub struct VersionHandler {
-    uri: String,
+pub struct VersionHandler<'a> {
+    uri: &'a str,
 }
 
-impl VersionHandler {
+impl<'a> VersionHandler<'a> {
     // fn new
-    pub fn new(uri: String, release_info_type: ReleaseInfoSourceType) -> Self {
-        assert!(release_info_type == ReleaseInfoSourceType::TelosGithub); // only support this for now, make VersionHandler release_info_type generics later
+    pub fn new(uri: &'a str, release_info_type: &ReleaseInfoSourceType) -> Self {
+        assert!(*release_info_type == ReleaseInfoSourceType::TelosGithub); // only support this for now, make VersionHandler release_info_type generics later
         VersionHandler { uri }
     }
 
@@ -30,7 +30,7 @@ impl VersionHandler {
     async fn get_release_info_json(&self) -> Result<json::JsonValue, AuError> {
         let req = Request::builder()
             .method(Method::GET)
-            .uri(&self.uri)
+            .uri(self.uri)
             .header("User-Agent", "hyper/0.14")
             .header("Accept", "application/vnd.github+json")
             .body(Body::empty())?;
@@ -56,14 +56,14 @@ mod test {
     async fn do_get_release_info() -> Result<ReleaseInfo, AuError> {
         let uri =
             String::from("https://api.github.com/repos/telosprotocol/TOP-Chain/releases/latest");
-        let h = VersionHandler::new(uri, ReleaseInfoSourceType::TelosGithub);
+        let h = VersionHandler::new(&uri, &ReleaseInfoSourceType::TelosGithub);
         h.get_release_info().await
     }
 
     #[test]
     fn test_get_release_info() {
         let r = tokio_test::block_on(do_get_release_info()).unwrap();
-        println!("r: {:?}", r);
+        // println!("r: {:?}", r);
         println!("version: {:?}", r.version());
     }
 }
