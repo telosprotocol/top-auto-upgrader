@@ -10,14 +10,26 @@ pub struct VersionHandler<'a> {
 }
 
 impl<'a> VersionHandler<'a> {
-    // fn new
+    /// github release api doc:
+    ///
+    /// - latests release:
+    ///     - GET `/repos/{owner}/{repo}/releases/latest`
+    /// - by tag name:
+    ///     - GET `/repos/{owner}/{repo}/releases/tags/{tag}`
+    ///
+    /// the VersionHandler::<TelosGithub> holds value : `/repos/{owner}/{repo}/releases/`,
+    /// to support get both latest && some exact tag.
     pub fn new(uri: &'a str, release_info_type: &ReleaseInfoSourceType) -> Self {
         assert!(*release_info_type == ReleaseInfoSourceType::TelosGithub); // only support this for now, make VersionHandler release_info_type generics later
         VersionHandler { uri }
     }
 
-    pub async fn get_release_info(&self) -> Result<ReleaseInfo, AuError> {
-        let fetch_json = self.get_release_info_json().await?;
+    pub async fn get_release_info(&self, tag_name: Option<String>) -> Result<ReleaseInfo, AuError> {
+        let uri = match tag_name {
+            Some(tag) => format!("{}/tags/{}", String::from(self.uri), tag),
+            None => format!("{}/latest", self.uri),
+        };
+        let fetch_json = self.get_release_info_json(&uri).await?;
         if let Some(release_info) = ReleaseInfo::new_from_json_object(&fetch_json) {
             Ok(release_info)
         } else {
@@ -27,10 +39,10 @@ impl<'a> VersionHandler<'a> {
         }
     }
 
-    async fn get_release_info_json(&self) -> Result<json::JsonValue, AuError> {
+    async fn get_release_info_json(&self, uri: &str) -> Result<json::JsonValue, AuError> {
         let req = Request::builder()
             .method(Method::GET)
-            .uri(self.uri)
+            .uri(uri)
             .header("User-Agent", "hyper/0.14")
             .header("Accept", "application/vnd.github+json")
             .body(Body::empty())?;
@@ -57,7 +69,7 @@ mod test {
         let uri =
             String::from("https://api.github.com/repos/telosprotocol/TOP-Chain/releases/latest");
         let h = VersionHandler::new(&uri, &ReleaseInfoSourceType::TelosGithub);
-        h.get_release_info().await
+        h.get_release_info(None).await
     }
 
     #[test]

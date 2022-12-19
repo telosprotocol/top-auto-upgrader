@@ -13,6 +13,13 @@ pub enum ProcessStatus {
 }
 
 #[derive(Debug)]
+pub enum JoinStatus {
+    Yes,
+    NotReady,
+    NotRunning,
+}
+
+#[derive(Debug)]
 pub struct TopioCommands {
     operator_user: String,
     exec_dir: String,
@@ -85,7 +92,6 @@ impl TopioCommands {
             .args(&["sh", "-c"])
             .arg(cmd_str)
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
             .spawn()?;
         let output = c.wait_with_output()?;
         Ok(std::str::from_utf8(&output.stdout)?
@@ -121,7 +127,6 @@ impl TopioCommands {
             .arg(cmd_str)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
             .spawn()?;
 
         let mut stdin = command.stdin.take().expect("Failed to use stdin");
@@ -144,7 +149,6 @@ impl TopioCommands {
             .args(&["sh", "-c"])
             .arg(cmd_str)
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
             .spawn()?;
 
         let r = c.wait_with_output()?;
@@ -152,17 +156,31 @@ impl TopioCommands {
         Ok(r)
     }
 
-    pub fn check_is_joined(&self) -> Result<Output, AuError> {
+    pub fn check_is_joined(&self) -> Result<JoinStatus, AuError> {
         let cmd_str = format!(r#"cd {} && topio node isJoined"#, &self.exec_dir);
         let c = Command::new("sudo")
             .args(&["-u", &self.operator_user])
             .args(&["sh", "-c"])
             .arg(cmd_str)
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
             .spawn()?;
         let r = c.wait_with_output()?;
-        Ok(r)
+        let output_str = std::str::from_utf8(&r.stdout)?
+            .chars()
+            .take_while(|c| !c.is_ascii_control())
+            .collect::<String>();
+        if output_str.contains("YES") {
+            Ok(JoinStatus::Yes)
+        } else if output_str.contains("not ready") {
+            Ok(JoinStatus::NotReady)
+        } else if output_str.contains("not running") {
+            Ok(JoinStatus::NotRunning)
+        } else {
+            Err(AuError::CustomError(format!(
+                "topio status error: {}",
+                &output_str
+            )))
+        }
     }
 
     /// @root
@@ -176,7 +194,6 @@ impl TopioCommands {
             .args(&["sh", "-c"])
             .arg(cmd_str)
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
             .spawn()?;
         let r = c.wait_with_output()?;
         Ok(r)

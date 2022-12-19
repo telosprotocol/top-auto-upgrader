@@ -6,7 +6,7 @@ use std::{
 use tokio::time::{sleep, Duration};
 
 use crate::{
-    commands::TopioCommands,
+    commands::{JoinStatus, TopioCommands},
     config::ConfigJson,
     error::AuError,
     frequency::FrequencyControl,
@@ -46,49 +46,89 @@ impl UpgradeTopioLogic {
     }
 
     async fn inner_run(&self) -> Result<(), AuError> {
-        if self.frequency.lock().unwrap().call_if_allowed() {
-            let latest_release = VersionHandler::new(
-                self.config.au_config.api(),
-                self.config.au_config.source_type(),
-            )
-            .get_release_info()
-            .await?;
-            if let Some(latest_version) = latest_release.version() {
-                let cmd = TopioCommands::new(
-                    self.config.user_config.user(),
-                    self.config.user_config.exec_dir(),
+        if !self.frequency.lock().unwrap().call_if_allowed() {
+            return Ok(());
+        }
+
+        let latest_release = VersionHandler::new(
+            self.config.au_config.api(),
+            self.config.au_config.source_type(),
+        )
+        .get_release_info(None)
+        .await?;
+        if let Some(latest_version) = latest_release.version() {
+            let cmd = TopioCommands::new(
+                self.config.user_config.user(),
+                self.config.user_config.exec_dir(),
+            );
+            let version_str = cmd.get_version()?;
+            let current_version = SemVersion::from_str(&version_str)?;
+            if latest_version.gt(&current_version) {
+                println!(
+                    "try update from {} to {} ",
+                    current_version.to_string(),
+                    latest_version.to_string()
                 );
-                let version_str = cmd.get_version()?;
-                let current_version = SemVersion::from_str(&version_str)?;
-                if latest_version.gt(&current_version) {
-                    println!(
-                        "try update from {} to {} ",
-                        current_version.to_string(),
-                        latest_version.to_string()
-                    );
-                    self.do_update(cmd, latest_version, latest_release)?;
+
+                if false == self.do_update(&cmd, latest_version, latest_release).await? {
+                    println!(" revert back to {}", current_version.to_string());
+                    let current_release = VersionHandler::new(
+                        self.config.au_config.api(),
+                        self.config.au_config.source_type(),
+                    )
+                    .get_release_info(Some(current_version.to_tag_name()))
+                    .await?;
+                    if false
+                        == self
+                            .do_update(&cmd, current_version, current_release)
+                            .await?
+                    {
+                        return Err(AuError::CustomError(
+                            "upgrader failed && revert to old version failed".into(),
+                        ));
+                    }
                 }
             }
         }
+
         Ok(())
     }
-    fn do_update(
+
+    async fn do_update(
         &self,
-        cmd: TopioCommands,
-        latest_version: SemVersion,
-        latest_release: ReleaseInfo,
-    ) -> Result<(), AuError> {
+        cmd: &TopioCommands,
+        version_info: SemVersion,
+        release_info: ReleaseInfo,
+    ) -> Result<bool, AuError> {
         _ = cmd.kill_topio()?;
-        let (asset_link, asset_name) = latest_release
+        let (asset_link, asset_name) = release_info
             .release_asset()
-            .ok_or(AuError::CustomError(String::from("asset error")))?;
+            .ok_or(AuError::CustomError("asset error".into()))?;
         _ = cmd.wget_new_topio(asset_link, asset_name)?;
-        _ = cmd.install_new_topio(latest_version.to_string())?;
+        _ = cmd.install_new_topio(version_info.to_string())?;
         _ = cmd.set_miner_key(
             self.config.user_config.pubkey(),
             self.config.fetch_password(),
         )?;
         _ = cmd.start_topio()?;
-        Ok(())
+        sleep(Duration::from_secs(5)).await;
+        let mut wait_cnt = 0;
+        loop {
+            match cmd.check_is_joined()? {
+                JoinStatus::NotReady => {
+                    wait_cnt = wait_cnt + 1;
+                    if wait_cnt >= 120 {
+                        return Ok(false);
+                    }
+                    sleep(Duration::from_secs(5)).await;
+                }
+                JoinStatus::Yes => {
+                    return Ok(true);
+                }
+                JoinStatus::NotRunning => {
+                    return Ok(false);
+                }
+            }
+        }
     }
 }

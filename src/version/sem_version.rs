@@ -9,6 +9,13 @@ pub struct SemVersion {
     patch: u32,
 }
 
+impl SemVersion {
+    /// Add `v` prefix like `v1.8.0`
+    pub fn to_tag_name(&self) -> String {
+        format!("v{}", self.to_string())
+    }
+}
+
 impl ToString for SemVersion {
     fn to_string(&self) -> String {
         format!("{}.{}.{}", self.major, self.minor, self.patch)
