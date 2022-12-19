@@ -10,7 +10,7 @@ use crate::{
     config::ConfigJson,
     error::AuError,
     frequency::FrequencyControl,
-    version::{SemVersion, VersionHandler},
+    version::{ReleaseInfo, SemVersion, VersionHandler},
 };
 
 pub struct UpgradeTopioLogic {
@@ -66,15 +66,23 @@ impl UpgradeTopioLogic {
                         current_version.to_string(),
                         latest_version.to_string()
                     );
-                    self.do_update(cmd, latest_version)?;
+                    self.do_update(cmd, latest_version, latest_release)?;
                 }
             }
         }
         Ok(())
     }
-    fn do_update(&self, cmd: TopioCommands, latest_version: SemVersion) -> Result<(), AuError> {
+    fn do_update(
+        &self,
+        cmd: TopioCommands,
+        latest_version: SemVersion,
+        latest_release: ReleaseInfo,
+    ) -> Result<(), AuError> {
         _ = cmd.kill_topio()?;
-        _ = cmd.wget_new_topio(latest_version.to_string())?;
+        let (asset_link, asset_name) = latest_release
+            .release_asset()
+            .ok_or(AuError::CustomError(String::from("asset error")))?;
+        _ = cmd.wget_new_topio(asset_link, asset_name)?;
         _ = cmd.install_new_topio(latest_version.to_string())?;
         _ = cmd.set_miner_key(
             self.config.user_config.pubkey(),

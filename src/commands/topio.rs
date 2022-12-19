@@ -39,17 +39,20 @@ impl TopioCommands {
         Ok(r)
     }
 
-    pub fn wget_new_topio(&self, tag: String) -> Result<Output, AuError> {
+    pub fn wget_new_topio(&self, file_link: &str, tar_name: &str) -> Result<Output, AuError> {
+        // // tag version:
+        // let cmd_str = format!(
+        //     r#"cd {} && wget https://github.com/telosprotocol/TOP-chain/releases/download/v{}/topio-{}-release.tar.gz -O topio-{}-release.tar.gz > /dev/null 2>&1 && tar zxvf topio-{}-release.tar.gz > /dev/null 2>&1 "#,
+        //     &self.exec_dir, &tag, &tag, &tag, &tag
+        // );
         let cmd_str = format!(
-            r#"cd {} && wget https://github.com/telosprotocol/TOP-chain/releases/download/v{}/topio-{}-release.tar.gz -O topio-{}-release.tar.gz > /dev/null 2>&1 && tar zxvf topio-{}-release.tar.gz > /dev/null 2>&1 "#,
-            &self.exec_dir, &tag, &tag, &tag, &tag
+            r#"cd {} && wget {} -O {} > /dev/null 2>&1 && tar zxvf {} > /dev/null 2>&1"#,
+            &self.exec_dir, file_link, tar_name, tar_name
         );
         let c = Command::new("sudo")
             .args(&["-u", &self.operator_user])
             .args(&["sh", "-c"])
             .arg(cmd_str)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
             .spawn()?;
         let r = c.wait_with_output()?;
         Ok(r)
@@ -248,7 +251,7 @@ mod test {
         let r = c.kill_topio();
         println!("kill result:{:?}", r);
 
-        // let r = c.wget_new_topio(String::from("1.7.1"));
+        // let r = c.wget_new_topio(&String::from("https://github.com/telosprotocol/TOP-chain/releases/download/v1.8.0/topio-1.8.0-release.tar.gz"),&String::from("topio-1.8.0-release.tar.gz"));
         // println!("wget result:{:?}", r);
 
         // let r = c.install_new_topio(String::from("1.7.1"));

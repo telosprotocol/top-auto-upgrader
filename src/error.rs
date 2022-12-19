@@ -22,6 +22,9 @@ pub enum AuError {
 
     #[error("std error: {0}")]
     StdError(String),
+
+    #[error("custom error: {0}")]
+    CustomError(String),
 }
 
 impl From<std::io::Error> for AuError {

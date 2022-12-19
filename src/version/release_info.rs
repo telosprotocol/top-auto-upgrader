@@ -37,6 +37,14 @@ impl ReleaseInfo {
     pub fn version(&self) -> Option<SemVersion> {
         SemVersion::from_str(&self.tag_name).ok()
     }
+
+    pub fn release_asset(&self) -> Option<(&str, &str)> {
+        let release_asset = self
+            ._assets
+            .iter()
+            .find(|&asset| asset._name.contains(".tar.gz") && asset._name.contains("topio"))?;
+        Some((&release_asset._browser_download_url, &release_asset._name))
+    }
 }
 
 impl ReleaseAsset {
