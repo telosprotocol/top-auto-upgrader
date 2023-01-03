@@ -1,6 +1,5 @@
-#![feature(never_type)]
-// #![feature(async_fn_in_trait)]
-// #![feature(let_chains)]
+// #![feature(never_type)]
+enum NeverType {} // stable rust compromise
 
 mod commands;
 mod config;
@@ -22,7 +21,7 @@ use tokio::{
 
 use crate::config::ConfigJson;
 
-fn test_run(config: ConfigJson) -> ! {
+fn test_run(config: ConfigJson) -> NeverType {
     let config = Arc::new(config);
     let logic_mutex = Arc::new(Mutex::new(0));
     tokio::runtime::Builder::new_multi_thread()

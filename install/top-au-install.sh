@@ -397,20 +397,19 @@ function install_build_tools() {
 
     # Install necessary dependencies
     if check_sys packageManager yum; then
-        yum install wget curl git -y
+        yum install wget curl git gcc pkg-config openssl-devel -y
     elif check_sys packageManager apt; then
         apt-get -f install -y
         apt-get -y update
         apt-get -y upgrade
-        apt-get -y install git wget curl
+        apt-get -y install build-essential git wget curl gcc pkg-config libssl-dev
     fi
 
     #Install Rust Toolchain
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
     chmod +x rustup-init.sh
     ./rustup-init.sh -y
-    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
-    source ~/.bashrc
+    . "$HOME/.cargo/env"
     rm -rf rustup-init.sh
 }
 
