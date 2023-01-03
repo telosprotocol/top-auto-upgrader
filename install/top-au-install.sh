@@ -407,11 +407,13 @@ function centos_install_python37() {
     # 4.Remove downloaded source archive file from your system:
     rm -rf /usr/src/Python-3.7.0.tgz
 
-    echo 'alias python3="python3.7"' >> ~/.bashrc
-    . ~/.bashrc
+    # echo 'alias python3="python3.7"' >> ~/.bashrc
+    # . ~/.bashrc
 
     ln -s /usr/local/bin/python3.7 /usr/bin/python3.7
     ln -s /usr/local/bin/pip3.7 /usr/bin/pip3.7
+    ln -s /usr/local/bin/python3.7 /usr/bin/python3
+    ln -s /usr/local/bin/pip3.7 /usr/bin/pip3
 
     cd ${cur_dir}
 }
