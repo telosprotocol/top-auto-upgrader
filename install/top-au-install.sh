@@ -389,6 +389,33 @@ function install_top_au_service() {
     fi
 }
 
+function centos_install_python37() {
+    # 1.Requirements:
+    yum install gcc openssl-devel bzip2-devel libffi-devel zlib-devel xz-devel -y
+
+    # 2.Download Python 3.7:
+    cd /usr/src
+    wget https://www.python.org/ftp/python/3.7.0/Python-3.7.0.tgz
+    tar xzf Python-3.7.0.tgz
+
+    # 3.Install Python 3.7.0:
+    cd Python-3.7.0
+    ./configure --enable-optimizations
+    make altinstall
+    # (make altinstall is used to prevent replacing the default python binary file /usr/bin/python)
+
+    # 4.Remove downloaded source archive file from your system:
+    rm -rf /usr/src/Python-3.7.0.tgz
+
+    echo 'alias python3="python3.7"' >> ~/.bashrc
+    . ~/.bashrc
+
+    ln -s /usr/local/bin/python3.7 /usr/bin/python3.7
+    ln -s /usr/local/bin/pip3.7 /usr/bin/pip3.7
+
+    cd ${cur_dir}
+}
+
 function install_build_tools() {
     if check_sys sysRelease debian ; then
         apt-get remove upstart -y
@@ -398,7 +425,8 @@ function install_build_tools() {
 
     # Install necessary dependencies
     if check_sys packageManager yum; then
-        yum install wget curl git gcc pkg-config openssl-devel -y
+        yum install wget curl git gcc openssl-devel -y
+        centos_install_python37
     elif check_sys packageManager apt; then
         apt-get -f install -y
         apt-get -y update
