@@ -340,6 +340,7 @@ function write_service_description_file() {
 [Service]
     Type=forking
     ExecStart=${svc_stub} start
+    RemainAfterExit=true
     ExecReload=${svc_stub} restart
     ExecStop=${svc_stub} stop
     PrivateTmp=true
