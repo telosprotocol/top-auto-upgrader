@@ -79,5 +79,7 @@ fn main() -> Result<(), AuError> {
 
     println!("Top Auto Upgrader Start!");
 
-    test_run(config_json)
+    test_run(config_json);
+    #[allow(unreachable_code)]
+    Ok(())
 }
