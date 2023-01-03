@@ -50,7 +50,8 @@ impl KeepAliveLogic {
         match (cmd.topio_status()?, cmd.safebox_status()?) {
             (ProcessStatus::NeedReset, _)
             | (_, ProcessStatus::NeedReset)
-            | (ProcessStatus::Stoped, ProcessStatus::Stoped) => {
+            | (ProcessStatus::Stoped, ProcessStatus::Stoped)
+            | (ProcessStatus::Stoped, ProcessStatus::Ok) => {
                 // Need totally reset && restart
                 // println!("stop && stop");
                 if self.frequency.lock().unwrap().call_if_allowed() {
@@ -59,13 +60,13 @@ impl KeepAliveLogic {
                 }
                 Ok(())
             }
-            (ProcessStatus::Stoped, ProcessStatus::Ok) => {
-                // restart topio only
-                if self.frequency.lock().unwrap().call_if_allowed() {
-                    self.restart_topio(&cmd)?;
-                }
-                Ok(())
-            }
+            // (ProcessStatus::Stoped, ProcessStatus::Ok) => {
+            //     // restart topio only
+            //     if self.frequency.lock().unwrap().call_if_allowed() {
+            //         self.restart_topio(&cmd)?;
+            //     }
+            //     Ok(())
+            // }
             (ProcessStatus::Ok, _) => Ok(()),
         }
     }
