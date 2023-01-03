@@ -318,7 +318,7 @@ function write_top_auto_upgrader_config() {
     },
     "au_config": {
         "release_api": "${config_release_api}",
-        "release_info_source_type": "${config_release_info_source_type}"
+        "release_info_source_type": "${config_release_info_source_type}",
         "logic_frequency_base": ${config_logic_frequency_base}
     },
     "temp_config": {
