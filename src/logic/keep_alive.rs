@@ -29,14 +29,15 @@ impl KeepAliveLogic {
         }
     }
     pub fn new(logic_mutex: Arc<Mutex<i32>>, config: Arc<ConfigJson>) -> Self {
+        let interval_base = config.au_config.logic_frequency_base();
         Self {
             logic_mutex,
             config,
             frequency: Arc::new(Mutex::new(FrequencyControl::new(
                 Duration::from_secs(0), // instant exec at first
-                Duration::from_secs(2 * 60),
-                Duration::from_secs(2 * 60),
-                Duration::from_secs(120 * 60),
+                Duration::from_secs(2 * interval_base),
+                Duration::from_secs(2 * interval_base),
+                Duration::from_secs(120 * interval_base),
             ))),
         }
     }

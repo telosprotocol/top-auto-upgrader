@@ -32,6 +32,7 @@ config_topio_user=""
 
 config_release_api="https://api.github.com/repos/telosprotocol/TOP-Chain/releases"
 config_release_info_source_type="TelosGithub"
+config_logic_frequency_base=60
 
 # bool result
 cmd_success=0
@@ -318,6 +319,7 @@ function write_top_auto_upgrader_config() {
     "au_config": {
         "release_api": "${config_release_api}",
         "release_info_source_type": "${config_release_info_source_type}"
+        "logic_frequency_base": ${config_logic_frequency_base}
     },
     "temp_config": {
         "temp_pswd": "${config_topio_mining_key_pswd}"
@@ -386,10 +388,30 @@ function install_top_au_service() {
     fi
 }
 
-function build_or_fetch_top_auto_upgrader() {
-    # TODO change from
-    # test only
-    /bin/cp -rfa ./target/release/${bin_name} ${target_dir}
+function install_build_tools() {
+    if check_sys sysRelease debian ; then
+        apt-get remove upstart -y
+        apt-get remove udev -y
+        apt-get autoremove -y
+    fi
+
+    # Install necessary dependencies
+    if check_sys packageManager yum; then
+        yum install wget curl git -y
+    elif check_sys packageManager apt; then
+        apt-get -f install -y
+        apt-get -y update
+        apt-get -y upgrade
+        apt-get -y install git wget curl
+    fi
+
+    #Install Rust Toolchain
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
+    chmod +x rustup-init.sh
+    ./rustup-init.sh -y
+    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+    rm -rf rustup-init.sh
 }
 
 function do_uninstall_action() {
@@ -410,6 +432,21 @@ function do_uninstall_action() {
     rm -f "${target_dir}"/"${bin_name}"
     rm -f "${service_dir}"/"${service_name}".service
     echo "${proj_name} uninstall success!"
+}
+
+function build_or_fetch_top_auto_upgrader() {
+    # TODO repos will be telosprotocol
+    git clone https://github.com/CharlesLiu-TOPNetwork/top-auto-upgrader.git
+    cd top-auto-upgrader
+    # git submodule update --init
+
+    cargo build --release
+
+    cd ..
+
+    /bin/cp -rfa ./top-auto-upgrader/target/release/${bin_name} ${target_dir}
+
+    rm -rf top-auto-upgrader
 }
 
 # Uninstall
@@ -441,6 +478,7 @@ function __install() {
     cd ${cur_dir}
 
     # 3. install neccessary build tools
+    install_build_tools
 
     # 4. uninstall old auto upgrader
     do_uninstall_action

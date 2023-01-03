@@ -33,14 +33,15 @@ impl UpgradeTopioLogic {
         }
     }
     pub fn new(logic_mutex: Arc<Mutex<i32>>, config: Arc<ConfigJson>) -> Self {
+        let interval_base = config.au_config.logic_frequency_base();
         Self {
             logic_mutex,
             config: config,
             frequency: Arc::new(Mutex::new(FrequencyControl::new(
                 Duration::from_secs(0),
-                Duration::from_secs(10 * 60),
-                Duration::from_secs(10 * 60),
-                Duration::from_secs(120 * 60),
+                Duration::from_secs(10 * interval_base),
+                Duration::from_secs(10 * interval_base),
+                Duration::from_secs(120 * interval_base),
             ))),
         }
     }
