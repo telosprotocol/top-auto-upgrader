@@ -379,6 +379,7 @@ function install_top_au_service() {
 
         chmod +x ${service_stub}
         if check_sys packageManager yum; then
+            yum install chkconfig -y
             chkconfig --add ${service_name}
             chkconfig ${service_name} on
         elif check_sys packageManager apt; then
