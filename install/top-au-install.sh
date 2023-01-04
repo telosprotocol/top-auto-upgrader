@@ -18,6 +18,7 @@ config_dir=/etc/top-au
 service_dir=/lib/systemd/system
 service_name=top-au
 service_stub=/etc/init.d/${service_name}
+[ ! -d "/etc/init.d" ] && service_stub=/usr/bin/${service_name} # compatible with centos 8 or higher, which do not have directory /etc/init.d
 bin_name=top-auto-upgrader
 
 
@@ -51,6 +52,14 @@ login_user=$(eval logname)
 login_user_home_dir=$( getent passwd ${login_user} | cut -d: -f6 )
 echo "login user: $login_user"
 # echo "$login_user_home_dir"
+
+# Disable selinux
+function disable_selinux() {
+    if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; then
+        sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+        setenforce 0
+    fi
+}
 
 # Check system
 function check_sys() {
@@ -498,6 +507,8 @@ function __uninstall() {
 function __install() {
     
     # 0. disable se linux
+    disable_selinux
+
     # 1. pre install if need, ask config that need to fill into json.
     pre_install
 
