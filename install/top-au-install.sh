@@ -10,8 +10,7 @@ export PATH
 
 proj_name="TOP Auto Upgrader"
 
-# TODO change after repo move to telosprotocol
-daemon_script_url="https://raw.githubusercontent.com/CharlesLiu-TOPNetwork/top-auto-upgrader/master/install/top-au-daemon.sh"
+daemon_script_url="https://raw.githubusercontent.com/telosprotocol/top-auto-upgrader/master/install/top-au-daemon.sh"
 
 target_dir=/usr/bin
 config_dir=/etc/top-au
@@ -476,8 +475,7 @@ function do_uninstall_action() {
 }
 
 function build_or_fetch_top_auto_upgrader() {
-    # TODO repos will be telosprotocol
-    git clone https://github.com/CharlesLiu-TOPNetwork/top-auto-upgrader.git
+    git clone https://github.com/telosprotocol/top-auto-upgrader.git
     cd top-auto-upgrader
     # git submodule update --init
 
@@ -549,8 +547,7 @@ function main() {
     echo "# Script of Install ${proj_name} Server"
     echo "######################################################################"
     echo "# Author: charles.liu@upblocks.io                                    #"
-    # TODO use telosprotocol
-    echo "# Github: https://github.com/CharlesLiu-TOPNetwork/top-auto-upgrader #"
+    echo "# Github: https://github.com/telosprotocol/top-auto-upgrader         #"
     echo "######################################################################"
     echo
 
