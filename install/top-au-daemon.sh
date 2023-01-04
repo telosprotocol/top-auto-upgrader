@@ -11,7 +11,7 @@
 # Description:       Control Auto Upgrade Service for TOP-Chain.
 ### END INIT INFO
 
-# Author: Charles
+# Author: charles.liu@upblocks.io
 
 NAME="TOP Auto Upgrader"
 DAEMON=/usr/bin/top-auto-upgrader

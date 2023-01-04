@@ -21,7 +21,7 @@ use tokio::{
 
 use crate::config::ConfigJson;
 
-fn test_run(config: ConfigJson) -> NeverType {
+fn logic_run(config: ConfigJson) -> NeverType {
     let config = Arc::new(config);
     let logic_mutex = Arc::new(Mutex::new(0));
     tokio::runtime::Builder::new_multi_thread()
@@ -79,7 +79,7 @@ fn main() -> Result<(), AuError> {
 
     println!("Top Auto Upgrader Start!");
 
-    test_run(config_json);
+    logic_run(config_json);
     #[allow(unreachable_code)]
     Ok(())
 }

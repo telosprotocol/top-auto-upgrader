@@ -5,7 +5,7 @@ export PATH
 #=================================================================#
 #   System Required:  CentOS 7, Debian, Ubuntu                    #
 #   Description: Script of Install TOP Auto Upgrader Server       #
-#   Author: Charles                                               #
+#   Author: charles.liu@upblocks.io                               #
 #=================================================================#
 
 proj_name="TOP Auto Upgrader"
@@ -49,7 +49,7 @@ cur_dir=$(pwd)
 
 login_user=$(eval logname)
 login_user_home_dir=$( getent passwd ${login_user} | cut -d: -f6 )
-# echo "$login_user"
+echo "login user: $login_user"
 # echo "$login_user_home_dir"
 
 # Check system
@@ -536,7 +536,8 @@ function main() {
     echo
     echo "# Script of Install ${proj_name} Server"
     echo "######################################################################"
-    echo "# Author: Charles                                                    #"
+    echo "# Author: charles.liu@upblocks.io                                    #"
+    # TODO use telosprotocol
     echo "# Github: https://github.com/CharlesLiu-TOPNetwork/top-auto-upgrader #"
     echo "######################################################################"
     echo
