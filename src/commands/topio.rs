@@ -65,18 +65,33 @@ impl TopioCommands {
         Ok(r)
     }
 
+    /// @root
     /// install specifical version of topio && restart topio safebox.
     pub fn install_new_topio(&self, tag: String) -> Result<Output, AuError> {
-        let cmd_str = format!(
-            r#"cd {} && cd topio-{}-release && sudo bash install.sh > /dev/null 2>&1 && . /etc/profile && bash set_topio.sh > /dev/null 2>&1 "#, // && . ~/.bashrc && ulimit -n 65535 && topio -v
+        // @root
+        let install_cmd_str = format!(
+            r#"cd {} && cd topio-{}-release && sudo bash install.sh > /dev/null 2>&1 "#,
             &self.exec_dir, &tag
         );
         let c = Command::new("sudo")
-            .args(&["-u", &self.operator_user])
+            .args(&["-u", "root"])
             .args(&["sh", "-c"])
-            .arg(cmd_str)
+            .arg(install_cmd_str)
             .spawn()?;
         _ = c.wait_with_output()?;
+
+        let rest_cmd_str = format!(
+            r#"cd {} && cd topio-{}-release && . /etc/profile && bash set_topio.sh > /dev/null 2>&1 "#,
+            &self.exec_dir, &tag
+        );
+
+        let c = Command::new("sudo")
+            .args(&["-u", &self.operator_user])
+            .args(&["sh", "-c"])
+            .arg(rest_cmd_str)
+            .spawn()?;
+        _ = c.wait_with_output()?;
+
         // for now install topio will launcher topio-safebox service, which is root' user, we need to kill && restart as user' user
         _ = self.kill_topio()?;
         self.start_safebox()
