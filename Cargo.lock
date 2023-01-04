@@ -1597,7 +1597,7 @@ dependencies = [
 [[package]]
 name = "top-keystore-rs"
 version = "0.1.0"
-source = "git+https://github.com/CharlesLiu-TOPNetwork/top-keystore-rs#366fab36523808b71ea646a0aff6741828b3fbea"
+source = "git+https://github.com/telosprotocol/top-keystore-rs#366fab36523808b71ea646a0aff6741828b3fbea"
 dependencies = [
  "aes",
  "base58",
