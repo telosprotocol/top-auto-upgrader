@@ -21,7 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = { version = "1.0", default-features = false }
 tokio = { version = "1.21", features = ["full"] }
-top-keystore-rs = { git = "https://github.com/CharlesLiu-TOPNetwork/top-keystore-rs" }
+top-keystore-rs = { git = "https://github.com/CharlesLiu-TOPNetwork/top-keystore-rs", default-features = false }
 
 [dev-dependencies]
 tokio-test = "0.4"

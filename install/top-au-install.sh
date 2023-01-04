@@ -428,7 +428,8 @@ function install_build_tools() {
     # Install necessary dependencies
     if check_sys packageManager yum; then
         yum install wget curl git gcc openssl-devel -y
-        centos_install_python37
+        ## pyo3 lib removed, so we do not need install python3.7 now
+        # centos_install_python37 
     elif check_sys packageManager apt; then
         apt-get -f install -y
         apt-get -y update
