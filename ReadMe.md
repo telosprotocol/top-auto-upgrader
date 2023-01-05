@@ -4,7 +4,7 @@ Auto Upgrade Service for [TOP-Chain](https://github.com/telosprotocol/TOP-chain)
 
 ## TOPIO Needed
 
-Before using this auto-upgrader, please make sure you have install topio and had workable mining account. 
+Before using this auto-upgrader, please make sure you have installed topio and had a workable mining account. 
 
 As the auto upgrader only handle the `upgrade` part, it can not do these prepare work for you.
 
@@ -20,9 +20,9 @@ chmod +x top-au-install.sh
 sudo ./top-au-install.sh
 ```
 
-Then follow the interactive script, it will collect infomation that auto-upgrader must need, like your topio directory and mining account.
+Then follow the interactive script, it will collect information that auto-upgrader must need, like your topio directory and mining account.
 
-If you use root user to start topio before, it could be quite simple, just input the keystore's password, and press some `Enter` to start installation.
+If you use root user to start topio before, it could be quite simple, you only need to input the corresponding keystore's password, and press some `Enter` to start installation.
 
 
 ## FAQs
@@ -40,7 +40,7 @@ If you use root user to start topio before, it could be quite simple, just input
 
 Install Top-Auto-Upgrader Service need sudo permission.
 
-While it do support any user with sudo permission, it would be less trouble if you installed topio with root user.
+While it does support any user with sudo permission, it would be less trouble if you installed topio with root user.
 
 
 ## Control top-au Service
@@ -53,7 +53,7 @@ use below command to show service status:
 systemctl status top-au
 ```
 
-After well-installed, it should print something like these in you console:
+After well-installed, it should print something like these in your console:
 
 ``` BASH
 
